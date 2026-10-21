@@ -71,8 +71,8 @@ A PWA photo booth: guests unlock with a **PIN bought at the counter**, pick a **
 | Prints | `PRINTING_ENABLED` (checkbox), `PRINT_PRICE` (50), `MAX_COPIES` (10), `STAFF_CODE` |
 | Booth timing | `CAMERA_COUNTDOWN` (10 s), `RESULT_IDLE_SECONDS` (180), `MIRROR_OUTPUT` |
 | Layouts | `LAYOUTS` — `frame1, frame2` (remove or reorder to change what guests see) |
-| AI | `AI_ENGINE` (background/direct), `OPENAI_MODEL`, `AI_TEXT_MODEL`, `IMAGE_QUALITY`, `INPUT_FIDELITY` (auto), `MAX_ATTEMPTS`, `IDENTITY_PROMPT`, `ANIMATED_STYLE` |
-| Privacy | `RETENTION_DAYS` (7) |
+| AI | `AI_ENGINE` (direct / background), `OPENAI_MODEL`, `AI_TEXT_MODEL`, `IMAGE_QUALITY`, `INPUT_FIDELITY` (auto), `MAX_ATTEMPTS`, `IDENTITY_PROMPT`, `ANIMATED_STYLE` |
+| Privacy | `RETENTION_DAYS` (7), `PUBLIC_PHOTO_LINKS` (on) |
 
 `STAFF_CODE`, the prompts and the AI options stay on the server — guests' browsers never receive them. Keep the Sheet itself private.
 
@@ -81,6 +81,13 @@ A PWA photo booth: guests unlock with a **PIN bought at the counter**, pick a **
 If a newer version of `Code.gs` adds settings, run **Add missing settings / characters** — it adds the new rows and never overwrites yours.
 
 **New frames:** make a 940×1672 PNG with transparent photo windows, add it to `LAYOUTS` in `config.js` (with each window's centre, size and angle), then list its id in the `LAYOUTS` setting.
+
+## Photos tab (every saved picture, with lh3 links)
+Each picture the booth saves to Drive gets a row: **Time · PIN · Type** (guest photo / AI character photo / AI 3D animated photo / collage / test) **· Character · Layout · Preview · lh3 URL · Drive link · File name · File ID · Status**.
+- **lh3 URL** = `https://lh3.googleusercontent.com/d/<FILE_ID>`, a direct image link you can use in other apps and pages.
+- For lh3 links and the **Preview** thumbnails to work, the `PUBLIC_PHOTO_LINKS` setting (on by default) shares each photo as "anyone with the link can view". The IDs are long and random, but anyone who has a link can see that photo. Untick the setting to keep photos private. If your Google Workspace admin blocks link sharing, Status says so.
+- When auto-delete removes a session's photos, their rows change to *Deleted after 7 days (in Drive trash for 30 days)*.
+- **📷 Check photo storage** shows the folder link, how many of each type are in it (and in the trash), the newest file, auto-delete status and the booth's last request. It also adds any Drive photos missing from the tab. **📷 Refresh Photos tab** re-checks each row (in Drive / in trash / missing).
 
 ## If the AI is not working
 1. Sheet menu **🎃 Photo Booth → 🧪 Test AI generation**. It runs one real picture from the newest guest photo and shows the engine, model, each status with timings, and **OpenAI's exact error**. If there's no guest photo yet, run the demo PIN once on the booth first.
@@ -95,7 +102,9 @@ If a newer version of `Code.gs` adds settings, run **Add missing settings / char
 | `Timeout` / `Exceeded maximum execution time` | Set `AI_ENGINE` = `background` |
 | `safety system` | Guest taps **Pick Another Character** (same photo) |
 
-**Why "background"?** Apps Script drops any outgoing request after about 60 seconds, and an OpenAI image edit often takes longer. In background mode the booth starts an OpenAI job, gets an id back in a second or two, and checks every 3 seconds until the picture is ready. A job stuck in OpenAI's queue for more than 75 s is cancelled and re-sent once, and a step that runs past 5 minutes stops with a Try Again button. If the guest reloads, re-entering their PIN picks up the same job.
+**Engines.** `direct` (default) makes one `/images/edits` call that waits for the picture. The photo is sent as JSON `images:[{image_url: data URL}]`, the same method proven in production booths, and the prompt reaches the image model word for word. Apps Script lets a single request run for minutes. `background` is a backup: it starts an OpenAI job and the booth checks every 3 s. A job stuck in the queue for more than 75 s is re-sent once, and a step stops after 5 minutes. It adds a small helper-model cost.
+
+**Check the deployment:** open your `/exec` URL in a browser. It should say `AI Photo Booth API v12 is running…`. A lower number, or no version, means Apps Script is still serving an old deployment: Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy.
 
 **Model retirement:** OpenAI retires `gpt-image-1-mini` on **1 Dec 2026**. Change `OPENAI_MODEL` in Settings before then (e.g. `gpt-image-2`) and run the Test AI menu item.
 

@@ -418,9 +418,9 @@
 
     // 1) start the step (or pick up a job that is already running after a reload)
     let res = resume ? { ok: true, pending: true } : (step === 1
-      ? await api('generate', { token: state.token, characterId: state.character.id, photo: state.photoB64 }, 90000)
+      ? await api('generate', { token: state.token, characterId: state.character.id, photo: state.photoB64 }, 330000)
       : await api('animate', Object.assign({ token: state.token },          // the server re-reads step 1 from Drive;
-          !API_READY ? { image: state.images[0].src } : {}), 90000));      // only the offline preview needs it here
+          !API_READY ? { image: state.images[0].src } : {}), 330000));   // direct engine waits for the picture (can take 1–3 min)      // only the offline preview needs it here
 
     // 2) background engine: check back every few seconds until the picture is ready
     let netFails = 0;

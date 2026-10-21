@@ -104,7 +104,7 @@ Each picture the booth saves to Drive gets a row: **Time · PIN · Type** (guest
 
 **Engines.** `direct` (default) makes one `/images/edits` call that waits for the picture. The photo is sent as JSON `images:[{image_url: data URL}]`, the same method proven in production booths, and the prompt reaches the image model word for word. Apps Script lets a single request run for minutes. `background` is a backup: it starts an OpenAI job and the booth checks every 3 s. A job stuck in the queue for more than 75 s is re-sent once, and a step stops after 5 minutes. It adds a small helper-model cost.
 
-**Check the deployment:** open your `/exec` URL in a browser. It should say `AI Photo Booth API v12 is running…`. A lower number, or no version, means Apps Script is still serving an old deployment: Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy.
+**Check the deployment:** open your `/exec` URL in a browser. It should say `AI Photo Booth API v13 is running…`. A lower number, or no version, means Apps Script is still serving an old deployment: Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy.
 
 **Model retirement:** OpenAI retires `gpt-image-1-mini` on **1 Dec 2026**. Change `OPENAI_MODEL` in Settings before then (e.g. `gpt-image-2`) and run the Test AI menu item.
 

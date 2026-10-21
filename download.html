@@ -59,12 +59,19 @@
     if (!code) return fail('No photo code in this link.');
     if (code === 'DEMO') return fail('This is a demo QR. Set API_URL in config.js to get real downloads.');
 
+    // Every call is a POST with a text/plain JSON body (no CORS preflight), like the booth itself.
+    const post = async (action, data) => {
+      const res = await fetch(CFG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                             body: JSON.stringify(Object.assign({ action }, data || {})) });
+      const raw = await res.text();
+      try { return JSON.parse(raw); } catch (x) { return { ok: false, error: 'The booth server is not set up for guests yet (it replied with a webpage). Please tell the booth staff.' }; }
+    };
     let r;
-    try { r = await (await fetch(CFG.API_URL + '?action=photo&c=' + encodeURIComponent(code), { redirect: 'follow' })).json(); }
+    try { r = await post('photo', { c: code }); }
     catch (e) { return fail('Could not reach the booth server. Please try again in a moment.'); }
     if (!r.ok) return fail(r.error || 'Photos not found.');
     try {
-      const c = await (await fetch(CFG.API_URL + '?action=config', { redirect: 'follow' })).json();
+      const c = await post('config');
       if (c.ok && c.print) $('price').textContent = c.print.currency + c.print.price;
     } catch (e) {}
 

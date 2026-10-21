@@ -40,20 +40,28 @@
     if (!API_READY) return mockApi(action, data);
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), timeoutMs);
     try {
+      // Same transport as the proven King Arthur booth: every call is a POST with a
+      // text/plain JSON body (a "simple" request, so the browser sends no CORS preflight).
       const r = await fetch(CFG.API_URL, {
-        method: 'POST', redirect: 'follow', signal: ctl.signal,
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // "simple" request → no CORS preflight
+        method: 'POST', signal: ctl.signal,
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(Object.assign({ action }, data))
       });
-      return await r.json();
+      const raw = await r.text();
+      try { return JSON.parse(raw); }
+      catch (x) {   // Google sent a web page (sign-in / permission / error) instead of data
+        return { ok: false, retry: true, setup: true, error: 'The booth server is not set up for guests yet. Please call the staff.',
+                 detail: 'The server replied with a webpage instead of data. In Apps Script: Deploy → Manage deployments → ✏️ Edit → Execute as "Me", Who has access "Anyone" → Version: New version → Deploy.' };
+      }
     } catch (e) {
       return { ok: false, retry: true, net: true, error: e.name === 'AbortError' ? 'The spell took too long. Please try again.' : 'Connection lost. Check the internet and try again.', detail: String(e.message || e) };
     } finally { clearTimeout(t); }
   }
+  // Kept for older call sites: now a POST like every other call (no GET requests to Apps Script).
   async function apiGet(params) {
     if (!API_READY) return { ok: false };
-    try { const r = await fetch(CFG.API_URL + '?' + new URLSearchParams(params), { redirect: 'follow' }); return await r.json(); }
-    catch (e) { return { ok: false, error: 'offline' }; }
+    const { action, ...rest } = params;
+    return api(action, rest, 60000);
   }
   // Offline mode (API_URL not set): the demo PIN runs with stand-in images.
   async function mockApi(action, d) {
@@ -744,7 +752,7 @@
     const conf = await apiGet({ action: 'config' });
     // Staff warning: make it obvious when the booth is NOT talking to the real backend.
     if (!API_READY) staffBanner('⚠️ Offline preview — API_URL in config.js is not set, so pictures are stand-ins (no real AI).');
-    else if (!conf.ok) staffBanner('⚠️ Cannot reach the booth server. Check API_URL in config.js and that the Apps Script deployment is "Anyone".');
+    else if (!conf.ok) staffBanner('⚠️ Cannot reach the booth server. In Apps Script: Deploy → Manage deployments → Edit → Execute as "Me", Who has access "Anyone" → New version. Also check API_URL in config.js.');
     if (conf.ok && conf.print) Object.assign(pricing, conf.print);
     if (conf.ok) applySettings(conf.settings || {});
     if (conf.ok && conf.characters && conf.characters.length) {

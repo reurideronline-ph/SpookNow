@@ -732,11 +732,19 @@
 
   if ('serviceWorker' in navigator && !CFG.EMBED) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 
+  function staffBanner(text) {
+    const b = document.createElement('div'); b.className = 'staff-banner'; b.setAttribute('role', 'alert'); b.textContent = text;
+    document.body.appendChild(b);
+  }
+
   /* ---------------- BOOT ---------------- */
   async function boot() {
     FX.start(); applyPricing(); goIntro();
     if (!API_READY) console.warn('[Booth] API_URL not set — running in DEMO mode (PIN 000000).');
     const conf = await apiGet({ action: 'config' });
+    // Staff warning: make it obvious when the booth is NOT talking to the real backend.
+    if (!API_READY) staffBanner('⚠️ Offline preview — API_URL in config.js is not set, so pictures are stand-ins (no real AI).');
+    else if (!conf.ok) staffBanner('⚠️ Cannot reach the booth server. Check API_URL in config.js and that the Apps Script deployment is "Anyone".');
     if (conf.ok && conf.print) Object.assign(pricing, conf.print);
     if (conf.ok) applySettings(conf.settings || {});
     if (conf.ok && conf.characters && conf.characters.length) {

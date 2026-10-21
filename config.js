@@ -3,7 +3,7 @@
  * ============================================================ */
 window.BOOTH_CONFIG = {
   // Paste your Apps Script Web App URL (Deploy → Web app → URL ending in /exec)
-  API_URL: 'https://script.google.com/macros/s/PASTE_YOUR_DEPLOYMENT_ID/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbyMC0zoGCwQkOCv-9ti_wSJFZybunSCM6ybEv_FE6mMlrAUiB9i/exec',
 
   /* Everything below is a FALLBACK. Once API_URL is set, the "Settings" and
      "Characters" tabs in your Google Sheet override these automatically. */
